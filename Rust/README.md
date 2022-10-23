@@ -57,6 +57,39 @@ cargo --version
 }
 ```
 
+### 配置镜像源（天朝专用）
+
+新增配置文件（.cargo/config），放置于用户目录或项目根目录下，以用户目录为例：
+
+```
+$HOME/.cargo/config
+```
+
+配置内容：
+
+```
+[source.crates-io]
+registry = "https://github.com/rust-lang/crates.io-index"
+# 指定镜像
+replace-with = 'tuna' # 如：tuna、sjtu、ustc，或者 rustcc
+
+# 中国科学技术大学
+[source.ustc]
+registry = "git://mirrors.ustc.edu.cn/crates.io-index"
+
+# 上海交通大学
+[source.sjtu]
+registry = "https://mirrors.sjtug.sjtu.edu.cn/git/crates.io-index"
+
+# 清华大学
+[source.tuna]
+registry = "https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git"
+
+# rustcc社区
+[source.rustcc]
+registry = "https://code.aliyun.com/rustcc/crates.io-index.git"
+```
+
 
 
 
