@@ -551,3 +551,105 @@ fn first_word(str: &str) -> &str {
 }
 ```
 
+## 六、结构体
+
+### 6.1 单元结构体
+
+```rust
+// 定义单元结构体
+struct User {
+    username: String,
+    email: String,
+    sign_in_count: i64,
+    active: bool,
+}
+
+fn main() {
+    let tsugi = build_user(String::from("tsugi@gmail.com"), String::from("tsugi"));
+
+    // 使用已有结构体变量构建新的结构体变量
+    let jerry = User {
+        email: String::from("jerry@gmail.com"),
+        username: String::from("jerry"),
+        ..tsugi
+    };
+    
+}
+
+// 通过函数创建结构体变量
+fn build_user(email: String, username: String) -> User {
+    User {
+        email,
+        username,
+        active: true,
+        sign_in_count: 1,
+    }
+}
+```
+
+### 6.2 元组结构体
+
+```rust
+// 定义元组结构体
+struct Color(i32, i32, i32);
+
+fn main() {
+    let red = Color(255, 0, 0);
+
+    // 访问元组结构体成员
+    println!("red({},{},{})", red.0, red.1, red.2);
+}
+```
+
+### 6.3 结构体打印
+
+```rust
+#[derive(Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+fn main() {
+    let rect = Rectangle {
+        width: 20,
+        height: 30,
+    };
+    // 打印结构体（#美化输出）
+    println!("rect: {:#?}", rect);
+}
+```
+
+> 为结构体启用派生Debug宏。
+
+### 6.4 实例方法与关联函数
+
+```rust
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+// 实现块：一个结构体可以有多个实现块。
+impl Rectangle {
+    // 实例方法：必须绑定实例
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+
+    // 关联函数：不绑定任何实例
+    fn square(size: u32) -> Rectangle {
+        Rectangle {
+            width: size,
+            height: size,
+        }
+    }
+}
+
+fn main() {
+    let rect = Rectangle::square(20);
+
+    println!("矩形面积为{}平方像素。", rect.area());
+}
+```
+

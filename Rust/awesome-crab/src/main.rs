@@ -1,19 +1,25 @@
-fn main() {
-    let str = "hello world";
-
-    let word = first_word(str);
-    println!("The first word is {}", word);
+struct Rectangle {
+    width: u32,
+    height: u32,
 }
 
-fn first_word(str: &str) -> &str {
-    // 字符串转为切片
-    let bytes = str.as_bytes();
-
-    for (i, &item) in bytes.iter().enumerate() {
-        if item == b' ' {
-            return &str[..i];
-        }
+impl Rectangle {
+    // 实例方法
+    fn area(&self) -> u32 {
+        self.width * self.height
     }
 
-    &str[..]
+    // 关联函数：不与任何实例关联
+    fn square(size: u32) -> Rectangle {
+        Rectangle {
+            width: size,
+            height: size,
+        }
+    }
+}
+
+fn main() {
+    let rect = Rectangle::square(20);
+
+    println!("矩形面积为{}平方像素。", rect.area());
 }
