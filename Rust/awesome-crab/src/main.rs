@@ -1,25 +1,12 @@
-struct Rectangle {
-    width: u32,
-    height: u32,
-}
-
-impl Rectangle {
-    // 实例方法
-    fn area(&self) -> u32 {
-        self.width * self.height
-    }
-
-    // 关联函数：不与任何实例关联
-    fn square(size: u32) -> Rectangle {
-        Rectangle {
-            width: size,
-            height: size,
-        }
-    }
-}
-
 fn main() {
-    let rect = Rectangle::square(20);
+    let some_value = Some(2);
 
-    println!("矩形面积为{}平方像素。", rect.area());
+    match some_value {
+        Some(2) => println!("two"),
+        _ => (), // 可忽略枚举值简化处理，无需一一列举。
+    }
+    // 以上模式匹配可使用if-let简化：
+    if let Some(2) = some_value {
+        println!("two");
+    }
 }

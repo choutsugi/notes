@@ -653,3 +653,157 @@ fn main() {
 }
 ```
 
+## 七、枚举与模式匹配
+
+### 7.1 枚举定义
+
+```rust
+enum IpAddrKind {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
+
+fn main() {
+    let ip_v4 = IpAddrKind::V4;
+    let ip_v6 = IpAddrKind::V6;
+
+    let localhost = IpAddrKind::V4(127, 0, 0, 1);
+
+    // ...
+}
+```
+
+### 7.2 枚举存储不同类型
+
+```rust
+enum Message {
+    Quit,                       // 不存放数据
+    Move { x: i32, y: i32 },    // 存放匿名结构体
+    Write(String),              // 存放字符串
+    ChangeColor(i32, i32, i32), // 存放三个整数
+}
+```
+
+### 7.3 关联函数
+
+```rust
+// enum Message...
+
+impl Message {
+    fn some_func() {
+        println!("awesome rust enum")
+    }
+}
+
+fn main() {
+    Message::some_func();
+}
+```
+
+### 7.4 可选枚举
+
+可选枚举Option：
+
+```rust
+enum Option<T> {
+    Some(T), // 有值
+    None,    // 无值
+}
+
+fn main() {
+    let some_number = Some(6);
+    let some_string = Some("string");
+    let absent_number: Option<i32> = None; // 可选枚举初始化为None时需要显式标注类型
+}
+```
+
+使用：
+
+```rust
+fn main() {
+    let x = 4;
+    let y = Some(4);
+    let sum = x + y.unwrap_or(0); // 获取枚举值，缺省值为0
+
+    println!("sum = {}", sum);
+}
+```
+
+### 7.5 模式匹配
+
+**枚举与模式匹配**
+
+```rust
+#[derive(Debug)]
+enum UsState {
+    Alabama,
+    Alaska,
+    Arizona,
+    Arkansas,
+    California,
+    // ...
+}
+
+enum Coin {
+    Penny,
+    Nickel,
+    Dime,
+    Quarter(UsState),
+}
+
+fn value_in_cents(coin: Coin) -> u8 {
+    match coin {
+        Coin::Penny => {
+            println!("Lucky penny");
+            1
+        }
+        Coin::Nickel => 5,
+        Coin::Dime => 10,
+        Coin::Quarter(state) => {
+            println!("state = {:?}", state);
+            25
+        }
+    }
+}
+
+fn main() {
+    value_in_cents(Coin::Quarter(UsState::Alaska));
+}
+```
+
+**可选枚举与模式匹配**
+
+```rust
+fn main() {
+    let five = Some(5);
+    let six = plus_one(five);
+    let none = plus_one(None);
+
+    // ...
+}
+
+fn plus_one(x: Option<i32>) -> Option<i32> {
+    match x {
+        None => None,
+        Some(i) => Some(i + 1), // 返回值包含在Some中。
+    }
+}
+```
+
+**可忽略的枚举值处理简化**
+
+```rust
+fn main() {
+    let some_value = Some(2);
+
+    match some_value {
+        Some(2) => println!("two"),
+        _ => (), // 可忽略枚举值简化处理，无需一一列举。
+    }
+    // 以上模式匹配可使用if-let简化：
+    if let Some(2) = some_value {
+        println!("two");
+    }
+}
+```
+
