@@ -525,3 +525,29 @@ fn main() {
 // }
 ```
 
+## 五、切片
+
+使用示例：获取第一个单词。
+
+```rust
+fn main() {
+    let str = "hello world";
+
+    let word = first_word(str);
+    println!("The first word is {}", word);
+}
+
+fn first_word(str: &str) -> &str {
+    // 字符串转为切片
+    let bytes = str.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &str[..i];
+        }
+    }
+
+    &str[..]
+}
+```
+

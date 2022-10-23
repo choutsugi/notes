@@ -1,8 +1,19 @@
 fn main() {
-    // dangle();
+    let str = "hello world";
+
+    let word = first_word(str);
+    println!("The first word is {}", word);
 }
 
-// 悬垂引用：返回引用，但引用对象超出作用域后已销毁。
-// fn dangle() -> &String {
-//     &String::from("hello")
-// }
+fn first_word(str: &str) -> &str {
+    // 字符串转为切片
+    let bytes = str.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &str[..i];
+        }
+    }
+
+    &str[..]
+}
