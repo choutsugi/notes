@@ -807,3 +807,31 @@ fn main() {
 }
 ```
 
+## 八、模块系统
+### 模块系统组成
+- 工作区包含若干个相互关联的Package。
+- 每个Package（通过cargo new创建）包含若干个Crate（Binary或Library）。
+- 每个Crate包含若干个Module（用于控制访问权限）。
+- 每个Module包含若干个源文件。
+
+### Crate 
+**Crate规则**
+- 规则一：一个包中必须至少包含一个crate。
+- 规则二：一个包中可以不包含library crate或包含一个library crate。
+- 规则三：一个包中可以包含任意数量的binary crate。
+
+> 默认src目录下main.rs为binary crate root，lib.rs为library crate root。
+
+**Crate创建**
+
+创建binary crate：
+```bash
+cargo new awesome-crab
+```
+创建library crate：
+```bash
+cargo new --lib awesome-crab-lib
+```
+
+### Module
+
