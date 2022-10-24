@@ -1,7 +1,3 @@
-// 模块
-mod front_of_house {
-    // 子模块
-    mod hosting {}
+mod front_of_house;
 
-    mod serving {}
-}
+use crate::front_of_house::hosting;

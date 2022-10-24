@@ -808,14 +808,15 @@ fn main() {
 ```
 
 ## 八、模块系统
-### 模块系统组成
+### 8.1 模块系统组成
 - 工作区包含若干个相互关联的Package。
 - 每个Package（通过cargo new创建）包含若干个Crate（Binary或Library）。
 - 每个Crate包含若干个Module（用于控制访问权限）。
 - 每个Module包含若干个源文件。
 
-### Crate 
+### 8.2 Crate 
 **Crate规则**
+
 - 规则一：一个包中必须至少包含一个crate。
 - 规则二：一个包中可以不包含library crate或包含一个library crate。
 - 规则三：一个包中可以包含任意数量的binary crate。
@@ -833,5 +834,204 @@ cargo new awesome-crab
 cargo new --lib awesome-crab-lib
 ```
 
-### Module
+### 8.3 Module
+
+**Module定义**
+
+```rust
+// 模块定义模块
+mod front_of_house {
+    // 嵌套的内部模块
+    mod hosting {
+        fn add_to_waitlist() {}
+
+        fn seat_at_table() {}
+    }
+
+    mod serving {
+        fn take_order() {}
+
+        fn serve_order() {}
+
+        fn take_payment() {}
+    }
+}
+```
+
+**Module使用**
+
+使用pub关键字定义公开模块及方法。
+
+```rust
+mod front_of_house {
+    // 使用pub公开模块
+    pub mod hosting {
+        pub fn add_to_waitlist() {} // 使用pub公开方法
+    }
+}
+
+pub fn eat_at_restaurant() {
+    // 绝对路径
+    crate::front_of_house::hosting::add_to_waitlist();
+    // 相对路径
+    front_of_house::hosting::add_to_waitlist();
+}
+```
+
+使用super关键字访问父级模块方法：
+
+```rust
+fn serve_order() {}
+mod back_of_house {
+    fn fix_incorret_order() {
+        cook_order();
+        // 使用super访问父级模块中的方法。
+        super::serve_order();
+    }
+
+    fn cook_order() {}
+}
+```
+
+模块内结构体及其字段默认缺省为私有：
+
+```rust
+mod back_of_house {
+
+    pub struct Breakfast {
+        pub toast: String,	// 使用pub公开后可访问
+        seasonal_fruit: String,
+    }
+
+    impl Breakfast {
+        pub fn summer(toast: &str) -> Breakfast {
+            Breakfast {
+                toast: String::from(toast),
+                seasonal_fruit: String::from("梨"),
+            }
+        }
+    }
+}
+
+pub fn eat_at_restaurant() {
+    let mut meal = back_of_house::Breakfast::summer("黑麦");
+    meal.toast = String::from("小麦");
+}
+```
+
+模块内枚举值无需一一指定公开：
+
+```rust
+mod back_of_house {
+    // 只需指定枚举公开
+    pub enum Appetizer {
+        Soup,
+        Salad,
+    }
+}
+
+pub fn eat_at_restaurant() {
+    let order1 = back_of_house::Appetizer::Soup;
+    let order2 = back_of_house::Appetizer::Salad;
+}
+```
+
+使用use简化module引入：
+
+```rust
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+/**
+ * 使用user引入模块
+ * 惯例：对于函数引入其父级模块，对于结构体、枚举则直接引入。
+ */
+use self::front_of_house::hosting;
+
+pub fn eat_at_restaurant() {
+    hosting::add_to_waitlist();
+}
+```
+
+解决同名引入冲突：
+
+```rust
+// 引入父级以解决冲突
+// use std::fmt;
+// use std::io;
+
+// 使用as定义别名解决冲突
+use std::fmt::Result;
+use std::io::Result as IoResult;
+
+/**
+ * 解决同名冲突：
+ *  方式一：引入父级
+ *  方式二：使用as定义引入别名
+ */
+
+fn func1() -> Result {
+    Ok(())
+}
+
+fn func2() -> IoResult<()> {
+    Ok(())
+}
+```
+
+引入并导出模块：
+
+```rust
+mod front_of_house {
+    pub mod hosting {
+        pub fn add_to_waitlist() {}
+    }
+}
+
+// 引入并导出模块
+pub use crate::front_of_house::hosting;
+
+pub fn eat_at_restaurant() {}
+```
+
+批量引入：
+
+```rust
+// 批量引入
+use rand::{CryptoRng, ErrorKind::Transient, Rng};
+// 嵌套引入
+use std::{self, write};
+// 全量引入
+// use std::io::*;
+
+pub fn eat_at_restaurant() {
+    let secret_number = rand::thread_rng().gen_range(1, 100);
+}
+```
+
+模块实现与声明分离：
+
+```rust
+// 模块声明：实现在与模块同名的文件中。
+mod front_of_house;
+
+// 实现：front_of_house.rs
+pub mod hosting {
+    pub fn add_to_waitlist() {}
+}
+```
+
+模块及子模块分离：
+
+- lib.rs文件：声明front_of_house模块，实现在同名文件中。
+- front_of_house.rs文件：front_of_house模块的实现，在其中声明hosting子模块。
+- front_of_house文件夹：映射front_of_house父模块。
+  - hosting.rs文件：hosting子模块的实现。
+
+
+
+
 
