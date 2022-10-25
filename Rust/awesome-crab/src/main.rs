@@ -1,12 +1,13 @@
-fn main() {
-    let some_value = Some(2);
+use std::collections::HashMap;
 
-    match some_value {
-        Some(2) => println!("two"),
-        _ => (), // 可忽略枚举值简化处理，无需一一列举。
+fn main() {
+    let text = "hello world wonderful world";
+    let mut map = HashMap::new();
+
+    for word in text.split_whitespace() {
+        let count = map.entry(word).or_insert(0);
+        *count += 1;
     }
-    // 以上模式匹配可使用if-let简化：
-    if let Some(2) = some_value {
-        println!("two");
-    }
+
+    println!("{:?}", map);
 }

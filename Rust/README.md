@@ -1031,7 +1031,119 @@ pub mod hosting {
 - front_of_house文件夹：映射front_of_house父模块。
   - hosting.rs文件：hosting子模块的实现。
 
+## 九、集合
 
+### 9.1 Vector
+
+基本使用：
+
+```rust
+fn main() {
+    // 创建不含任何元素的vector
+    let mut v1: Vec<i32> = Vec::new();
+    // vector添加元素
+    v1.push(1);
+    v1.push(2);
+    v1.push(3);
+
+    // 使用vec宏创建vector
+    let mut v2 = vec![1, 2, 3];
+
+    // 使用索引访问vector元素：vector内存动态分配，运行时使用索引可能发生越界
+    println!("The third element of v1 is {}", &v1[2]);
+    println!("The third element of v2 is {}", &v2[2]);
+
+    // 使用get获取vector元素
+    match v1.get(2) {
+        Some(value) => println!("The third element of v1 is {}", value),
+        None => println!("There is no third element in v1."),
+    }
+
+    // ERR：可变引用与不可变引用不可同时存在。
+    // let third = &v2[1]; // 不可变引用
+    // v2.push(4); //可变引用
+
+    // 遍历
+    for i in &mut v2 {
+        *i += 10;
+    }
+    for i in &v2 {
+        println!("{}", i);
+    }
+
+    // 定义枚举值为不同类型的枚举
+    enum SpreadsheetCell {
+        Int(i32),
+        Float(f64),
+        Text(String),
+    }
+
+    // 使用枚举以实现vector存储不同类型数据
+    let row = vec![
+        SpreadsheetCell::Int(3),
+        SpreadsheetCell::Text(String::from("blue")),
+        SpreadsheetCell::Float(10.12),
+    ];
+    match &row[1] {
+        SpreadsheetCell::Int(i) => println!("{}", i),
+        _ => println!("Not an iteger!"),
+    };
+}
+```
+
+### 9.3 HashMap
+
+基本使用：
+
+```rust
+use std::collections::HashMap;
+
+fn main() {
+    let blue = String::from("Blue");
+    let yellow = String::from("Yellow");
+
+    let mut scores = HashMap::new();
+
+    // insert传入所有权
+    scores.insert(blue, 10);
+    scores.insert(yellow, 20);
+
+    let team_name = String::from("Blue");
+    let _score = scores.get(&team_name);
+
+    // 遍历
+    for (key, value) in &scores {
+        println!("{}:{}", key, value);
+    }
+
+    // 插入相同值则覆盖
+    scores.insert(String::from("Green"), 50);
+    scores.insert(String::from("Green"), 60);
+
+    // 若不存在则插入
+    scores.entry(String::from("Red")).or_insert(30);
+    scores.entry(String::from("Red")).or_insert(90); // 将忽略
+
+}
+```
+
+统计单词数量：
+
+```rust
+use std::collections::HashMap;
+
+fn main() {
+    let text = "hello world wonderful world";
+    let mut map = HashMap::new();
+
+    for word in text.split_whitespace() {
+        let count = map.entry(word).or_insert(0);
+        *count += 1;
+    }
+
+    println!("{:?}", map);
+}
+```
 
 
 
