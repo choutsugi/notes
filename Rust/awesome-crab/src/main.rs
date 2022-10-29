@@ -1,6 +1,15 @@
-// 为实现了Display的类型再添加ToString实现
-impl<T: Display> ToString for T {}
+use std::fmt::Display;
 
-fn main() {
-    // ...
+fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
+where
+    T: Display,
+{
+    println!("Announcement! {}", ann);
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
 }
+
+fn main() {}

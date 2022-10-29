@@ -1528,5 +1528,146 @@ impl<T: Display + PartialOrd> Pair<T> {
 impl<T: Display> ToString for T {}
 ```
 
+## 十三、生命周期
+
+### 13.1 悬空引用
+
+```rust
+fn main() {
+    let r;
+
+    {
+        let x = 5;
+        r = &x; // 悬空引用：x出作用域后回收。
+    }
+
+    println!("r: {}", r);
+}
+```
+
+### 13.2 生存期注解
+
+函数返回值生存期注解：
+
+```rust
+fn main() {
+    let str1 = String::from("abcd");
+
+    {
+        // str2生存期小于str1
+        let str2 = String::from("1234");
+        let result = longest(str1.as_str(), str2.as_str());
+        println!("The longest string is {}", result);
+    }
+}
+
+// 借用检查器报错（无法推测返回值生存期），需要通过生存期注解（'a）指定返回值生存期。
+// 生存期注解不改变生存期。
+// 以下函数在使用生存期注解后返回值的生存期取参数x与y中生存期最小的一方。
+fn longest<'a>(x: &'a str, y: &'a str) -> &str {
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+// & i32        // 引用。
+// &'a i32      // 具有显式生存期的引用。
+// &'a mut i32  // 具有显式生存期的可变引用。
+```
+
+> 使用注解帮助借用检查器发现悬挂指针🙏！
+
+结构体生存期注解：
+
+```rust
+struct ImportantExcerpt<'a> {
+    // 生存期注解指明：结构体的生存期不能大于其字段part的生存期
+    part: &'a str,
+}
+
+fn main() {
+    let novel = String::from("Call me Ishmael, Some years ago...");
+    let fisrt_sentence = novel.split('.').next().expect("Could not find");
+    let i = ImportantExcerpt {
+        part: fisrt_sentence,
+    };
+}
+```
+
+获取第一个单词（生存期注解版）：
+
+```rust
+fn first_word<'a>(s: &'a str) -> &'a str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+
+    &s[..]
+}
+```
+
+### 13.3 生存期规则
+
+规则：
+
+- 每个引用参数都是一个具有生存期的参数。
+- 若仅一个输入生存期参数，则该生存期将赋给所有的输出生存期参数。
+- 如多个输入生存期参数中存在&self或&mut self，则self生存期赋给所有输出生存期参数。
+
+栗子：
+
+```rust
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+}
+
+impl<'a> ImportantExcerpt<'a> {
+    // fn return_part(&'a self, announcement: &str) -> &'a str {
+
+    // 自动推导生存期
+    fn return_part(&self, announcement: &str) -> &str {
+        println!("Attention please: {}", announcement);
+        self.part
+    }
+}
+```
+
+### 13.4 静态生存期
+
+静态生存期，同程序生存期相同。
+
+```rust
+fn main() {
+    // 静态生存期
+    let s: &'static str = "I have a static lifetime.";
+}
+```
+
+### 13.5 生存期注解与特征限制的泛型
+
+```rust
+use std::fmt::Display;
+
+fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
+where
+    T: Display,
+{
+    println!("Announcement! {}", ann);
+    if x.len() > y.len() {
+        x
+    } else {
+        y
+    }
+}
+
+fn main() {}
+```
+
 
 
