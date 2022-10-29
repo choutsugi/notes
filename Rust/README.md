@@ -28,6 +28,7 @@ cargo --version
 插件：
 
 - rust-analyzer
+- crates
 - Even Better TOML：.toml文件支持
 - Error Lens：错误提示
 - One Dark Pro：主题
@@ -1369,7 +1370,163 @@ enum Result<T, E> {
 }
 ```
 
+## 十二、trait
 
+trait，特征，用于定义共享行为（接口）。
+
+### 12.1 trait定义
+
+```rust
+// 定义trait
+pub trait Summary {
+    // fn summarize(&self) -> String;
+
+    // 缺省实现
+    fn summarize(&self) -> String {
+        // 缺省实现中调用其他方法
+        format!("Read more from {}...", self.summarize_author())
+    }
+
+    fn summarize_author(&self) -> String;
+}
+```
+
+### 12.2 为结构体实现trait
+
+```rust
+pub struct Article {
+    pub author: String,
+    pub content: String,
+    pub headline: String,
+}
+
+// 为Article实现Summary trait
+impl Summary for Article {
+    // summarize使用缺省实现
+
+    // 覆写summarize_author
+    fn summarize_author(&self) -> String {
+        format!("{}", self.author)
+    }
+}
+
+pub struct Tweet {
+    pub username: String,
+    pub content: String,
+    pub reply: bool,
+    pub retweet: bool,
+}
+
+// 为Tweet实现Summary trait
+impl Summary for Tweet {
+    fn summarize_author(&self) -> String {
+        format!("@{}", self.username)
+    }
+
+    // 覆写缺省实现
+    fn summarize(&self) -> String {
+        format!("{}: {}", self.username, self.content)
+    }
+}
+```
+
+### 12.3 trait作为函数参数
+
+trait作为函数参数：
+
+```rust
+// 方式一
+pub fn notify(item: &impl Summary) {
+    println!("Breaking news! {}", item.summarize());
+}
+// 方式二
+pub fn notify<T: Summary>(item: &T) {
+    println!("Breaking news! {}", item.summarize());
+}
+```
+
+> 当参数为多个且类型相同时使用方式二。
+
+限制函数参数实现多个trait：
+
+```rust
+// 方式一
+pub fn notify(item: &impl Summary + Display) {
+    println!("Breaking news! {}", item.summarize());
+}
+// 方式二（使用泛型）
+pub fn notify<T: Summary + Display>(item: &T) {
+    println!("Breaking news! {}", item.summarize());
+}
+```
+
+限制函数泛型参数实现多个trait：
+
+```rust
+fn some_func<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
+    0
+}
+// 以上可优化为👇
+fn some_func<T, U>(t: &T, u: &U) -> i32
+where
+    T: Display + Clone,
+    U: Clone + Debug,
+{
+    0
+}
+```
+
+### 12.4 trait作为函数返回值
+
+***注：返回类型必须在编译时可确定，不可使用else返回不同类型！***
+
+```rust
+fn returns_summarizable() -> impl Summary {
+    // Tweet实现了Summary
+    Tweet {
+        username: String::from("tsugi"),
+        content: String::from("bad bye!"),
+        reply: false,
+        retweet: false,
+    }
+}
+```
+
+### 12.5 使用trait限制有条件的使用方法
+
+```rust
+use std::fmt::Display;
+
+struct Pair<T> {
+    x: T,
+    y: T,
+}
+
+impl<T> Pair<T> {
+    fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+// 仅实现了Display和PartialOrd的类型可调用cmp_display方法
+impl<T: Display + PartialOrd> Pair<T> {
+    fn cmp_display(&self) {
+        if self.x >= self.y {
+            println!("The largest member is x = {}", self.x);
+        } else {
+            println!("The largest member is y = {}", self.y);
+        }
+    }
+}
+```
+
+### 12.6 通用实现
+
+即为实现了某个trait的类型实现另外的trait。
+
+```rust
+// 为实现了Display的类型再添加ToString实现
+impl<T: Display> ToString for T {}
+```
 
 
 
