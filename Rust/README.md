@@ -1172,3 +1172,204 @@ fn main() {
 }
 ```
 
+## 十、错误处理
+
+### 10.1 Result枚举与可恢复的错误
+
+**使用match处理错误**
+
+```rust
+use std::{fs::File, io::ErrorKind};
+
+fn main() {
+    // 使用match处理错误
+    let f = File::open("hello.txt");
+    let f = match f {
+        Ok(file) => file,
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => match File::create("hello.txt") {
+                Ok(fc) => fc,
+                Err(e) => panic!("无法创建文件：{:?}", e),
+            },
+            other_error => {
+                panic!("无法打开文件：{:?}", other_error)
+            }
+        },
+    };
+}
+```
+
+**使用闭包处理错误**
+
+```rust
+use std::{fs::File, io::ErrorKind};
+
+fn main() {
+    // 使用闭包处理错误
+    let f = File::open("hello.txt").unwrap_or_else(|error| {
+        if error.kind() == ErrorKind::NotFound {
+            File::create("hello.txt").unwrap_or_else(|error| {
+                panic!("无法创建文件：{:?}", error);
+            })
+        } else {
+            panic!("无法打开文件：{:?}", error);
+        }
+    });
+}
+```
+
+**使用unwrap处理错误**
+
+```rust
+use std::fs::File;
+
+fn main() {
+    let f = File::open("hello.txt").unwrap();
+}
+```
+
+**使用expect处理错误**
+
+```rust
+use std::fs::File;
+
+fn main() {
+    let f = File::open("hello.txt").expect("无法打开文件：hello.txt");
+}
+```
+
+### 10.2 错误传播
+
+**普通函数错误传播**
+
+```rust
+use std::fs::{self, File};
+use std::{self, io};
+
+fn read_username_from_file() -> Result<String, io::Error> {
+    // let f = File::open("hello.txt");
+    // let mut f = match f {
+    //     Ok(file) => file,
+    //     Err(e) => return Err(e),
+    // };
+    // let mut s = String::new();
+    // match f.read_to_string(&mut s) {
+    //     Ok(_) => Ok(s),
+    //     Err(e) => Err(e),
+    // }
+
+    // // 使用?简化
+    // let mut f = File::open("hello.txt")?;
+    // let mut s = String::new();
+    // f.read_to_string(&mut s)?;
+    // Ok(s)
+
+    // // 使用方法级联简化
+    // let mut s = String::new();
+    // File::open("hello.txt")?.read_to_string(&mut s)?;
+    // Ok(s)
+
+    // 再简化
+    fs::read_to_string("hello.txt")
+}
+
+fn main() {
+    read_username_from_file();
+}
+```
+
+**main函数错误传播**
+
+```rust
+use std::error::Error;
+use std::fs::{self, File};
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let f = File::open("hello.txt")?;
+    Ok(())
+}
+```
+
+### 10.3 panic与不可恢复的错误
+
+panic宏使用场景：
+
+- 不可恢复的错误
+- 样例代码
+- 原型代码
+- 测试代码
+
+> 使用RUST_BACKTRACE=1在程序panic时输出调用栈。
+
+## 十一、泛型
+
+### 11.1 泛型方法
+
+```rust
+fn main() {
+    let number_list = vec![34, 35, 25, 100, 65];
+    let largest = get_largest(number_list);
+    println!("最大数字为：{}", largest);
+}
+
+// <T: PartialOrd> 限制传入类型必须实现PartialOrd与Copy trait
+fn get_largest<T: PartialOrd + Copy>(number_list: Vec<T>) -> T {
+    let mut largest = number_list[0];
+    for number in number_list {
+        if number > largest {
+            largest = number;
+        }
+    }
+    largest
+}
+```
+
+### 11.2 泛型结构体
+
+```rust
+// 泛型结构体
+struct Point<T, U> {
+    x: T,
+    y: U,
+}
+
+// 结构体实现块
+impl<T, U> Point<T, U> {
+    fn x(&self) -> &T {
+        &self.x
+    }
+}
+
+// 只适用于f64类型
+impl Point<f64, f64> {
+    fn y(&self) -> f64 {
+        self.y
+    }
+}
+
+fn main() {
+    let p = Point { x: 5, y: 10 };
+    println!("{}", p.x())
+}
+```
+
+### 11.3 泛型枚举
+
+Option与Result：
+
+```rust
+enum Option<T> {
+    Some(T),
+    None,
+}
+
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+```
+
+
+
+
+
