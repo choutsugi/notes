@@ -143,7 +143,7 @@ root@test2:/# kafka-console-producer.sh --broker-list 172.24.211.113:9092,172.24
 开启消费者（主机一）：
 
 ```bash
-root@test1:/# kafka-console-consumer.sh --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092 --topic foo
+root@test1:/# kafka-console-consumer.sh --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092 --topic foo --from-beginning
 hello
 ```
 
