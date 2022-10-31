@@ -64,6 +64,12 @@ services:
 ```bash
 root@test1:/# docker-compose up -d
 ```
+查看容器状态：
+```bash
+root@test1:/# docker ps
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS               NAMES
+ea96a941db3c        bitnami/kafka:latest   "/opt/bitnami/scri..."   18 minutes ago      Up 18 minutes                           kafka_kraft
+```
 
 ### 2.2 主机二
 
@@ -100,8 +106,23 @@ services:
 ```bash
 root@test2:/# docker-compose up -d
 ```
+查看容器状态：
+```bash
+root@test2:/# docker ps
+CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS               NAMES
+ea96a941db3c        bitnami/kafka:latest   "/opt/bitnami/scri..."   21 minutes ago      Up 21 minutes                           kafka_kraft
+```
 
 ## 三、测试
+
+进入容器：
+```bash
+root@test2:/# docker exec -it ea96a941db3c /bin/bash
+```
+进入测试脚本目录：
+```bash
+root@ea96a941db3c:/# cd /opt/bitnami/kafka/bin
+```
 
 ### 3.1 创建topic
 
@@ -146,4 +167,10 @@ root@test2:/# kafka-console-producer.sh --broker-list 172.24.211.113:9092,172.24
 root@test1:/# kafka-console-consumer.sh --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092 --topic foo --from-beginning
 hello
 ```
+
+### 3.3 删除Topic
+```bash
+root@test1:/# kafka-topics.sh --delete --topic foo --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092
+```
+> 删除Topic前务必先停止生产者与消费者，否则删除失败！
 
