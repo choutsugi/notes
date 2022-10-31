@@ -7,6 +7,11 @@
 | 主机test1 | 172.24.211.113 | Kafka_kraft_1 |
 | 主机test2 | 172.24.211.114 | Kafka_kraft_2 |
 
+开放端口：
+```bash
+iptables -I INPUT -p tcp --dport 9092 -j ACCEPT
+iptables -I INPUT -p tcp --dport 9093 -j ACCEPT
+```
 ### 1.2 Docker环境
 
 安装docker：
