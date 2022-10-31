@@ -1,43 +1,31 @@
 ## 一、环境准备
-
 ### 1.1 主机环境
-
 | 主机      | IP             | 服务          |
 | --------- | -------------- | ------------- |
 | 主机test1 | 172.24.211.113 | Kafka_kraft_1 |
 | 主机test2 | 172.24.211.114 | Kafka_kraft_2 |
-
 开放端口：
 ```bash
 iptables -I INPUT -p tcp --dport 9092 -j ACCEPT
 iptables -I INPUT -p tcp --dport 9093 -j ACCEPT
 ```
 ### 1.2 Docker环境
-
 安装docker：
-
 ```bash
 yum install docker
 ```
-
 安装docker-compose：
-
 ```bash
 yum install docker-compose
 ```
-
 启动docker：
-
 ```bash
 systemctl start docker
 ```
 
 ## 二、容器编排
-
 ### 2.1 主机一
-
 docker-compose.yaml（172.24.211.113）
-
 ```yaml
 version: "3"
 services:
@@ -63,9 +51,7 @@ services:
        - /data/deploy/kafkaCluster/kraft:/bitnami/kafka:rw
      network_mode: host
 ```
-
 启动：
-
 ```bash
 root@test1:/# docker-compose up -d
 ```
@@ -75,11 +61,8 @@ root@test1:/# docker ps
 CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS               NAMES
 ea96a941db3c        bitnami/kafka:latest   "/opt/bitnami/scri..."   18 minutes ago      Up 18 minutes                           kafka_kraft
 ```
-
 ### 2.2 主机二
-
 docker-compose.yaml（172.24.211.114）
-
 ```yaml
 version: "3"
 services:
@@ -105,9 +88,7 @@ services:
        - /data/deploy/kafkaCluster/kraft:/bitnami/kafka:rw
      network_mode: host
 ```
-
 启动：
-
 ```bash
 root@test2:/# docker-compose up -d
 ```
@@ -119,7 +100,6 @@ ea96a941db3c        bitnami/kafka:latest   "/opt/bitnami/scri..."   21 minutes a
 ```
 
 ## 三、测试
-
 进入容器：
 ```bash
 root@test2:/# docker exec -it ea96a941db3c /bin/bash
@@ -128,25 +108,18 @@ root@test2:/# docker exec -it ea96a941db3c /bin/bash
 ```bash
 root@ea96a941db3c:/# cd /opt/bitnami/kafka/bin
 ```
-
 ### 3.1 创建topic
-
 创建topic（主机一）：
-
 ```bash
 root@test1:/# kafka-topics.sh --create --topic foo --partitions 5 --replication-factor 2 --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092
 Created topic foo.
 ```
-
 查看topic（主机一）：
-
 ```bash
 root@test1:/# kafka-topics.sh --list --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092
 foo
 ```
-
 查看topic详情（主机二）：
-
 ```bash
 root@test2:/# kafka-topics.sh --describe --topic foo --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092
 Topic: foo      TopicId: MRj-PkasTnurXnhm6l_yOg PartitionCount: 5       ReplicationFactor: 2    Configs:
@@ -156,26 +129,19 @@ Topic: foo      TopicId: MRj-PkasTnurXnhm6l_yOg PartitionCount: 5       Replicat
         Topic: foo      Partition: 3    Leader: 1       Replicas: 1,2   Isr: 1,2
         Topic: foo      Partition: 4    Leader: 2       Replicas: 2,1   Isr: 2,1
 ```
-
 ### 3.2 生产者与消费者
-
 开启生产者（主机二）：
-
 ```bash
 root@test2:/# kafka-console-producer.sh --broker-list 172.24.211.113:9092,172.24.211.114:9092 --topic foo
 >hello
 ```
-
 开启消费者（主机一）：
-
 ```bash
 root@test1:/# kafka-console-consumer.sh --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092 --topic foo --from-beginning
 hello
 ```
-
 ### 3.3 删除Topic
 ```bash
 root@test1:/# kafka-topics.sh --delete --topic foo --bootstrap-server 172.24.211.113:9092,172.24.211.114:9092
 ```
 > 删除Topic前务必先停止生产者与消费者，否则删除失败！
-
