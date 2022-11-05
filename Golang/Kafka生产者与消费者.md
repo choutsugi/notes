@@ -100,6 +100,7 @@ func main() {
 	cfg.Producer.Return.Errors = true
 	cfg.Producer.RequiredAcks = sarama.WaitForAll
 	cfg.Producer.Partitioner = sarama.NewRandomPartitioner
+	cfg.Producer.Timeout = 5 * time.Second
 
 	client, err := sarama.NewClient([]string{"172.26.114.212:9092", "172.16.0.119:9092"}, cfg)
 	if err != nil {
@@ -156,6 +157,7 @@ func main() {
 	cfg.Producer.Return.Errors = true
 	cfg.Producer.RequiredAcks = sarama.WaitForAll
 	cfg.Producer.Partitioner = sarama.NewRandomPartitioner
+	cfg.Producer.Timeout = 5 * time.Second
 
 	client, err := sarama.NewClient([]string{"172.26.114.212:9092", "172.16.0.119:9092"}, cfg)
 	if err != nil {
