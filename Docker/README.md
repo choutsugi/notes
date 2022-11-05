@@ -35,7 +35,7 @@ docker-compose：
 ```yaml
 # 方法1
 environment:
-  TZ: Asia/Shanghai
+  TZ=Asia/Shanghai
   
 # 方法2
 environment:
