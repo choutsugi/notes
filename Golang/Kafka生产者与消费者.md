@@ -1,139 +1,196 @@
 ## sarama
-自定义消费者组：
+### 消费者组
 ```go
-package kq
-
-import (
-	"github.com/Shopify/sarama"
-	"log"
-)
-
-type CustomConsumerGroup struct {
-}
-
-func (CustomConsumerGroup) Setup(_ sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-func (CustomConsumerGroup) Cleanup(_ sarama.ConsumerGroupSession) error {
-	return nil
-}
-
-func (h CustomConsumerGroup) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		switch msg.Topic {
-		case "TestTopic":
-			// ...
-			log.Printf("consumer received msg: %s\n", string(msg.Value))
-		default:
-			log.Printf("unidentified topic: %s\n", msg.Topic)
-		}
-
-		// mark as consumed
-		session.MarkMessage(msg, "")
-	}
-	return nil
-}
-```
-
-初始化消费者组：
-```go
-package kq
+package main
 
 import (
 	"context"
 	"github.com/Shopify/sarama"
-	"github.com/pkg/errors"
 	"log"
 )
 
-var (
-	ConsumerGroup sarama.ConsumerGroup
+const (
+	TopicForOrderProcess = "foo"
+	ConsumerGroupID      = "Group"
 )
 
-func InitConsumerGroup(addrs []string, groupId string) {
+type MetaAppConsumerGroupHandler struct {
+}
+
+func (MetaAppConsumerGroupHandler) Setup(_ sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+func (MetaAppConsumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error {
+	return nil
+}
+
+func (h MetaAppConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	for msg := range claim.Messages() {
+		switch msg.Topic {
+		case TopicForOrderProcess:
+			SuccessCount += 1
+			log.Printf("接收消息(%s)，已接收数量为%d：partition = %d, offset = %d", msg.Value, SuccessCount, msg.Partition, msg.Offset)
+		default:
+			log.Printf("未识别的topic：%s", msg.Topic)
+		}
+		session.MarkMessage(msg, "")
+	}
+	return nil
+}
+
+var (
+	ConsumerGroup sarama.ConsumerGroup
+	SuccessCount  int
+)
+
+func main() {
 
 	cfg := sarama.NewConfig()
 	cfg.Version = sarama.V0_10_2_0
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
+	cfg.Consumer.Fetch.Max = 5
+	cfg.Consumer.Fetch.Default = 3
 
 	var err error
-	ConsumerGroup, err = sarama.NewConsumerGroup(addrs, groupId, cfg)
+	ConsumerGroup, err = sarama.NewConsumerGroup([]string{"172.26.114.212:9092", "172.16.0.119:9092"}, ConsumerGroupID, cfg)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to init consumer"))
+		panic(err.Error())
 	}
 
 	go func() {
 		for err := range ConsumerGroup.Errors() {
-			log.Printf("consumer group errors: %+v", err)
+			log.Printf(err.Error())
 		}
 	}()
 
-	go func() {
-		for {
-			topics := []string{"TestTopic"}
-			if err := ConsumerGroup.Consume(context.Background(), topics, CustomConsumerGroup{}); err != nil {
-				log.Printf("consume failed; err: %+v", err)
-				return
-			}
+	ctx := context.Background()
+	for {
+		topics := []string{TopicForOrderProcess}
+		handler := MetaAppConsumerGroupHandler{}
+		if err := ConsumerGroup.Consume(ctx, topics, handler); err != nil {
+			log.Printf(err.Error())
+			return
 		}
-	}()
+	}
+
 }
 ```
-初始化生产者：
+
+### 同步生产者
 ```go
-package kq
+package main
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/pkg/errors"
+	"kafka_producer/randstring"
+	"log"
+	"time"
 )
 
-var (
-	Producer *SyncProducer
+const (
+	TopicForOrderProcess = "foo"
 )
 
-func InitProducer(addrs []string) {
+func main() {
+
 	cfg := sarama.NewConfig()
 	cfg.Producer.Return.Successes = true
 	cfg.Producer.Return.Errors = true
 	cfg.Producer.RequiredAcks = sarama.WaitForAll
 	cfg.Producer.Partitioner = sarama.NewRandomPartitioner
 
-	cli, err := sarama.NewSyncProducer(addrs, cfg)
+	client, err := sarama.NewClient([]string{"172.26.114.212:9092", "172.16.0.119:9092"}, cfg)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to init producer"))
+		panic(err.Error())
 	}
-	Producer = &SyncProducer{cli: cli}
+	defer client.Close()
+
+	producer, err := sarama.NewSyncProducerFromClient(client)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	successCount, failCount := 0, 0
+
+	value := randstring.RandomStr(17)
+	startTime := time.Now().Unix()
+	for i := 0; i < 10000; i++ {
+		partition, offset, err := producer.SendMessage(&sarama.ProducerMessage{
+			Topic: TopicForOrderProcess,
+			Value: sarama.StringEncoder(value),
+		})
+		if err != nil {
+			failCount += 1
+			log.Printf("发送消息（%s）失败（%s）：%d", value, err.Error(), failCount)
+			continue
+		}
+		successCount += 1
+		log.Printf("发送消息（%s）成功（%d）：partition = %d, offset = %d", value, successCount, partition, offset)
+	}
+
+	log.Printf("成功：%d，失败：%d，耗时：%d", successCount, failCount, time.Now().Unix()-startTime)
 }
 ```
-测试程序：
+### 异步生产者
 ```go
 package main
 
 import (
 	"fmt"
-	"kafka_test/kq"
+	"github.com/Shopify/sarama"
+	"kafka_producer_async/randstring"
 	"log"
 	"time"
 )
 
+const (
+	TopicForOrderProcess = "foo"
+)
+
 func main() {
 
-	addrs := []string{"127.0.0.1:9092", "127.0.0.1:9094"}
+	cfg := sarama.NewConfig()
+	cfg.Producer.Return.Successes = true
+	cfg.Producer.Return.Errors = true
+	cfg.Producer.RequiredAcks = sarama.WaitForAll
+	cfg.Producer.Partitioner = sarama.NewRandomPartitioner
 
-    // 初始化生产者
-	kq.InitProducer(addrs)
-    // 初始化消费者
-	kq.InitConsumerGroup(addrs, "TestGroup")
+	client, err := sarama.NewClient([]string{"172.26.114.212:9092", "172.16.0.119:9092"}, cfg)
+	if err != nil {
+		panic(err.Error())
+	}
+	defer client.Close()
 
-	for i := 0; i < 10; i++ {
-		value := fmt.Sprintf("TEST:%d:%s", i, time.Now().Format("2006-01-02 15:04:05"))
-		if err := kq.Producer.SendMessage("TestTopic", value); err != nil {
-			log.Printf("%+v", err)
+	producer, err := sarama.NewAsyncProducerFromClient(client)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	go func(producer sarama.AsyncProducer) {
+		successCount, failCount := 0, 0
+
+		for {
+			select {
+			case err := <-producer.Errors():
+				failCount += 1
+				log.Printf("发送消息（%s）失败（%d）：%s", err.Msg.Value, failCount, err.Error())
+			case msg := <-producer.Successes():
+				successCount += 1
+				log.Printf("发送消息（%s）成功（%d）：partition = %d, offset = %d, time = %s", msg.Value, successCount, msg.Partition, msg.Offset, time.Now().Format("2006-01-02 15:04:05"))
+			}
 		}
-		fmt.Println("Send message: ", value)
+	}(producer)
+
+	value := randstring.RandomStr(17)
+
+	fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
+	for i := 0; i < 1000; i++ {
+		producer.Input() <- &sarama.ProducerMessage{
+			Topic: TopicForOrderProcess,
+			Value: sarama.StringEncoder(value),
+		}
 	}
 
 	select {}
