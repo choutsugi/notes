@@ -33,7 +33,7 @@ RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 docker-compose：
 ```yaml
-# 方法1
+# 方法1（已验证成功）
 environment:
   TZ=Asia/Shanghai
   
