@@ -47,6 +47,8 @@ services:
        - KAFKA_KRAFT_CLUSTER_ID=LelM2dIFQkiUFvXCEcqRWA
        - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@172.24.211.113:9093,2@172.24.211.114:9093
        - ALLOW_PLAINTEXT_LISTENER=yes
+       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+       - TZ=Asia/Shanghai
      volumes:
        - /data/deploy/kafkaCluster/kraft:/bitnami/kafka:rw
      network_mode: host
@@ -84,6 +86,8 @@ services:
        - KAFKA_KRAFT_CLUSTER_ID=LelM2dIFQkiUFvXCEcqRWA
        - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@172.24.211.113:9093,2@172.24.211.114:9093
        - ALLOW_PLAINTEXT_LISTENER=yes
+       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
+       - TZ=Asia/Shanghai
      volumes:
        - /data/deploy/kafkaCluster/kraft:/bitnami/kafka:rw
      network_mode: host
