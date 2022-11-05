@@ -10,7 +10,7 @@ sudo nano /etc/docker/daemon.json
 ```
 > 阿里云镜像服务申请地址：https://cr.console.aliyun.com/cn-shanghai/instances
 
-## 设置容器时间
+## 设置容器时间与宿主机同步
 docker run添加-v参数：
 ```bash
 docker run -p 3306:3306 --name mysql -v /etc/localtime:/etc/localtime
