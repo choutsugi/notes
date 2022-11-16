@@ -69,3 +69,10 @@ func TestUrlBuilder(t *testing.T) {
 	fmt.Println(reqUrl)
 }
 ```
+测试结果：
+```text
+=== RUN   TestUrl
+https://unknowhost.com?channel=unknown&state=0b2c1f82-1ddb-4e51-b185-a3e57861251e&state_type=uuid
+--- PASS: TestUrl (0.00s)
+PASS
+```
