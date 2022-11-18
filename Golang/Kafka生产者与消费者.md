@@ -26,17 +26,23 @@ func (MetaAppConsumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error 
 }
 
 func (h MetaAppConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	for msg := range claim.Messages() {
-		switch msg.Topic {
-		case TopicForOrderProcess:
-			SuccessCount += 1
-			log.Printf("接收消息(%s)，已接收数量为%d：partition = %d, offset = %d", msg.Value, SuccessCount, msg.Partition, msg.Offset)
-		default:
-			log.Printf("未识别的topic：%s", msg.Topic)
-		}
-		session.MarkMessage(msg, "")
-	}
 	return nil
+
+	for {
+		select {
+		case msg := <-claim.Messages():
+			switch msg.Topic {
+			case TopicForOrderProcess:
+				SuccessCount += 1
+				log.Printf("接收消息(%s)，已接收数量为%d：partition = %d, offset = %d", msg.Value, SuccessCount, msg.Partition, msg.Offset)
+			default:
+				log.Printf("未识别的topic：%s", msg.Topic)
+			}
+			session.MarkMessage(msg, "")
+		case <-session.Context().Done():
+			return nil
+		}
+	}
 }
 
 var (
