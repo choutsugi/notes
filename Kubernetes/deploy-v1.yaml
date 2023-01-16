@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-pod
+  labels:
+    app: mysql
+spec:
+  containers:
+  - name: mysql
+    image: mysql:5.7
+    env:
+      - name: MYSQL_ROOT_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: mysql-password
+            key: PASSWORD
+            optional: false
+        value: "123456"
+    volumeMounts:
+      - mountPath: /var/lib/mysql
+        name: data-volume
+      - mountPath: /etc/mysql/conf.d
+        name: config-volume
+        readOnly: true
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 3306
+  volumes:
+    - name: config-volume
+      configMap:
+        name: mysql-config
+    - name: data-volume
+      hostPath:
+        path: /home/mysql/data
+        type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+data:
+  mysql.cnf: |
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_general_ci
+    init-connect='SET NAMES utf8mb4'
+
+    [client]
+    default-character-set=utf8mb4
+
+    [mysql]
+    default-character-set=utf8mb4
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-password
+type: Opaque
+data:
+  PASSWORD: "cGFzc3dvcmQK"
